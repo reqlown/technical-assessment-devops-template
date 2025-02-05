@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -27,36 +27,37 @@ jobs:
           installer-parallel: true
 
       - name: Install dependencies
-        run: poetry install --no-root --no-interaction
+        run: poetry install --no-interaction
+
+      - name: Install Ruff
+        run: python -m pip install --upgrade pip ruff
 
       - name: Lint with Ruff
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install ruff
-          ruff check --output-format=github .
-        continue-on-error: true
+        run: poetry run ruff check .
+        continue-on-error: false
 
-      - run: |
-          python -m pip install --upgrade pip
-          python -m pip install pytest pytest-cov
-          pytest --cov-report term-missing --cov=lambda_app/ tests/
-        continue-on-error: true
+      - name: Install Test Dependencies
+        run: python -m pip install pytest pytest-cov
 
-     
+      - name: Run Unit Tests
+        run: poetry run pytest --cov-report term-missing --cov=lambda_app/ tests/
+        continue-on-error: false
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Build Docker Image
         run: docker build -t lambda-ci-image .
-        continue-on-error: true 
 
       - name: Run Docker Container
         run: docker run -d -p 3001:8080 --name lambda-container lambda-ci-image
-        continue-on-error: true  
 
       - name: Wait for Lambda to Start
-        run: sleep 5 
+        run: sleep 5
+
+      - name: Verify Container is Running
+        run: docker ps
 
       - name: Test Lambda Function with curl
         run: |
-          curl -d @events/event.json http://localhost:3001/2015-03-31/functions/function/invocations
+          curl -d @events/event.json http://localhost:3001/2015-03-31/functions/function/invocations | tee lambda-response.json
