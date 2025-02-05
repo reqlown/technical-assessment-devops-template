@@ -52,12 +52,18 @@ jobs:
       - name: Run Docker Container
         run: docker run -d -p 3001:8080 --name lambda-container lambda-ci-image
 
-      - name: Wait for Lambda to Start
+      - name: Wait for container to Start
         run: sleep 6
 
       - name: Verify Container is Running
         run: docker ps
 
-      - name: Test Lambda Function with curl
+      - name: Invoke Lambda Function with curl
         run: |
-          curl -d @events/event.json http://localhost:3001/2015-03-31/functions/function/invocations | tee lambda-response.json
+          RESPONSE=$(curl -s -d @events/event.json http://localhost:3001/2015-03-31/functions/function/invocations)
+          echo "Response: $RESPONSE"
+          echo "$RESPONSE" | grep '"statusCode": 200' || (echo "Lambda function test failed!" && exit 1)
+      
+      - name: Stop and remove container
+        if: always()
+        run: docker stop lambda-container && docker rm lambda-container
