@@ -46,8 +46,38 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Check if k3d is installed
+        run: |
+          if ! command -v k3d &> /dev/null
+          then
+            echo "k3d not found, installing..."
+            curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+          else
+            echo "k3d is already installed"
+          fi
+
+      - name: Start K3D Cluster
+        run: |
+          k3d cluster create my-cluster \
+            --registry-create my-cluster:5000 \
+            -p 5432:5432@loadbalancer
+
+      - name: Verify Cluster is Running
+        run: k3d cluster list
+
       - name: Build Docker Image
         run: docker build -t my-lambda-image .
+
+      - name: Push Image to Internal Registry
+        run: docker push my-cluster:5000/my-lambda-image
+
+      - name: Apply Kubernetes Manifests
+        run: kubectl apply -f k8s/
+
+      - name: Verify Pods and Services
+        run: |
+          kubectl get pods
+          kubectl get services
 
       - name: Run Docker Container
         run: docker run -d -p 3001:8080 --name lambda-container my-lambda-image

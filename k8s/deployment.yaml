@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lambda-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lambda-app
+  template:
+    metadata:
+      labels:
+        app: lambda-app
+    spec:
+      containers:
+        - name: lambda-app
+          image: k3d-my-registry:5000/my-lambda-image
+          ports:
+            - containerPort: 8080
+          resources:    # limitar y policy if crash vuelva a init
+            limits:
+              memory: "512Mi"
+              cpu: "0.5"
+      restartPolicy: Always
