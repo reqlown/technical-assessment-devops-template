@@ -68,6 +68,12 @@ jobs:
       - name: Build Docker Image
         run: docker build -t my-lambda-image .
 
+      - name: Tag Docker Image
+        run: docker tag my-lambda-image my-cluster:5000/my-lambda-image
+
+      - name: Push Image to Internal Registry
+        run: docker push my-cluster:5000/my-lambda-image
+
       - name: Push Image to Internal Registry
         run: docker push my-cluster:5000/my-lambda-image
 
