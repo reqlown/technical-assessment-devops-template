@@ -47,10 +47,10 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Build Docker Image
-        run: docker build -t lambda-ci-image .
+        run: docker build -t my-lambda-image .
 
       - name: Run Docker Container
-        run: docker run -d -p 3001:8080 --name lambda-container lambda-ci-image
+        run: docker run -d -p 3001:8080 --name lambda-container my-lambda-image
 
       - name: Wait for container to Start
         run: sleep 6
