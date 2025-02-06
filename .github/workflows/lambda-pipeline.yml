@@ -71,11 +71,8 @@ jobs:
       - name: Tag Docker Image
         run: docker tag my-lambda-image my-cluster:5000/my-lambda-image
 
-      - name: Push Image to Internal Registry
-        run: docker push my-cluster:5000/my-lambda-image
-
-      - name: Push Image to Internal Registry
-        run: docker push my-cluster:5000/my-lambda-image
+      - name: Push Image
+        run: docker tag my-lambda-image localhost:5000/my-lambda-image && docker push localhost:5000/my-lambda-image
 
       - name: Apply Kubernetes Manifests
         run: kubectl apply -f k8s/
